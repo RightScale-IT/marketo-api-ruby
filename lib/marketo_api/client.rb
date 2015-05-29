@@ -23,6 +23,7 @@ class MarketoAPI::Client
     ssl_verify_mode:         :none,
     ssl_version:             :TLSv1,
     convert_request_keys_to: :none,
+    raise_exceptions:        false
   }.freeze
   DEFAULT_CONFIG.values.each(&:freeze)
   private_constant :DEFAULT_CONFIG
@@ -82,6 +83,7 @@ class MarketoAPI::Client
     @subdomain = config.delete(:api_subdomain).freeze
 
     @logger = config.delete(:logger)
+    @raise_exceptions = config.delete(:raise_exceptions)
 
     user_id = config.delete(:user_id)
     encryption_key = config.delete(:encryption_key)
@@ -125,9 +127,10 @@ class MarketoAPI::Client
       message: params,
       soap_header: { 'ns1:AuthenticationHeader' => @auth.signature }
     ).to_hash
-  rescue Exception => e
+  rescue => e
     @error = e
     @logger.log(e) if @logger
+    raise e if @raise_exceptions
     nil
   end
 

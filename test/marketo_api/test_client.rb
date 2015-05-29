@@ -37,9 +37,9 @@ class TestMarketoAPIClient < Minitest::Test
     refute subject.respond_to? :customobjects
   end
 
-  def stub_savon callable = nil, &block
+  def stub_savon callable = nil, object = subject, &block
     callable ||= ARGS_STUB
-    subject.instance_variable_get(:@savon).stub :call, callable do
+    object.instance_variable_get(:@savon).stub :call, callable do
       block.call if block
     end
   end
@@ -50,6 +50,13 @@ class TestMarketoAPIClient < Minitest::Test
       assert subject.error?
       refute_nil subject.error
       assert_instance_of ArgumentError, subject.error
+    end
+  end
+
+  def test_raise_exceptions
+    client = setup_client(raise_exceptions: true)
+    stub_savon(Proc.new { raise RuntimeError }, client) do
+      assert_raises(RuntimeError) { client.call(:web_method, {}) }
     end
   end
 
